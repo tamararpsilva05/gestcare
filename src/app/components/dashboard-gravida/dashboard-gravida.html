@@ -1,0 +1,255 @@
+<div class="dashboard-container">
+
+    <div class="overlay-desativada" *ngIf="contaDesativada">
+        <div class="desativada-card">
+            <h2>Conta Desativada</h2>
+            <p>A sua conta foi desativada pelo administrador da plataforma. Neste momento não é capaz de usufruir de mais nenhum dos benefícios da GestCare.Para mais esclarecimentos contacte o seu obstetra.</p>
+            <button class="btn-sair-destacado" (click)="logout()">Sair</button>
+        </div>
+    </div>
+
+    <div class="overlay-obrigatoria" *ngIf="!contaDesativada && obrigarTrocarSenha">
+        <div class="obrigatorio-card">
+            <h2>Bem-vinda!</h2>
+            <p>Neste portal, será capaz de usufruir de várias funcionalidades, pensadas exclusivamente para o seu bem-estar. Agradecemos pela sua confiança. Entre as funcionalidades disponíveis, será capaz de agendar consultas, exames e verificar a evolução da sua gravidez.Por segurança, pedimos que altere a sua password antes de continuar!</p>
+            <div class="form-group">
+                <label>Nova password</label>
+                <input type="password" [(ngModel)]="novaSenhaObrigatoria" placeholder="Mínimo 6 caracteres">
+            </div>
+            <div class="form-group">
+                <label>Confirmar nova password</label>
+                <input type="password" [(ngModel)]="confirmarSenhaObrigatoria" placeholder="Repete a password">
+            </div>
+            <div class="erro" *ngIf="erroSenhaObrigatoria">{{ erroSenhaObrigatoria }}</div>
+            <div class="sucesso" *ngIf="sucessoSenhaObrigatoria">{{ sucessoSenhaObrigatoria }}</div>
+            <button class="btn-salvar" type="button" (click)="alterarPasswordObrigatoria()">Alterar password</button>
+        </div>
+    </div>
+
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Área da Grávida</h2>
+        </div>
+        <ul class="menu">
+            <li class="active">Início</li>
+            <li (click)="irParaConsultas()" style="cursor: pointer;">Consultas</li>
+            <li (click)="irParaQuestionario()" style="cursor: pointer;">Questionário</li>
+            <li (click)="irParaAgenda()">Agenda</li>
+            <li (click)="irParaTimeline()" style="cursor: pointer;">Timeline</li>
+        </ul>
+    </nav>
+
+    <div class="main-area">
+
+        <header class="top-header">
+            <div class="saudacao">
+                <span class="boas-vindas">Olá, <strong>{{ nome }}</strong>!</span>
+                <span class="sub-saudacao">Bem-vinda ao seu espaço de cuidado</span>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-notificacoes-dashboard" routerLink="/notificacoes" type="button">
+                    <span class="icon-sino">🔔</span>
+                    <span class="texto-btn">Notificações</span>
+                    <span class="ponto-alerta-dashboard"></span>
+                </button>
+
+                <button class="btn-perfil-premium" type="button">
+                    <div class="avatar-circle">👤</div>
+                    <span class="text-perfil">O Meu Perfil</span>
+                </button>
+
+                <button class="btn-sair-destacado" type="button" (click)="logout()">
+                    <span>Sair</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="banner-alerta-global" *ngIf="temNotificacoesNovas">
+            <p><strong>Novidade:</strong> Foram marcados novos exames ou consultas no seu perfil. Verifique a secção de notificações!</p>
+            <button class="btn-ir-notificacoes" routerLink="/notificacoes">Ver Agora</button>
+        </div>
+
+        <div class="lembretes-cancelamento" *ngIf="notificacoesGravida.length > 0">
+            <div class="lembrete-cancelamento-header">
+                <span>{{ notificacoesGravida.length }} consulta(s) cancelada(s) pelo médico</span>
+            </div>
+            <div class="lembrete-cancelamento-item" *ngFor="let n of notificacoesGravida">
+                <span>{{ n.descricaoNotificacao }}</span>
+            </div>
+        </div>
+
+        <main class="content">
+
+            <section class="banner-gestacao">
+                <div class="banner-info">
+                    <div class="banner-texto-esquerda">
+                        <h2>Semana {{ semanaAtual }} de Gestação</h2>
+                        <p class="banner-sub">{{ trimestreTexto }} • Faltam {{ semanasEmFalta }} semanas</p>
+                    </div>
+                </div>
+
+                <div class="barra-progresso-container">
+                    <div class="barra-progresso-linhas">
+                        <span>Progresso</span>
+                        <span>{{ progressoPercentagem }}%</span>
+                    </div>
+                    <div class="track-barra">
+                        <div class="progresso-preenchido" [style.width.%]="progressoPercentagem"></div>
+                    </div>
+                </div>
+
+                <p class="banner-curiosidade">
+                    O seu bebé tem aproximadamente o tamanho de <strong>{{ tamanhoBebeComparacao }}</strong> e já consegue ouvir sons externos!
+                </p>
+            </section>
+
+            <div class="notificacao-diaria-container" *ngIf="mostrarAvisoQuestionario">
+                <div class="notificacao-conteudo">
+                    <div class="notificacao-icone">🌸</div>
+                    <div class="notificacao-texto-bloco">
+                        <h4>Lembra-te do teu bebé hoje! ✨</h4>
+                        <p>Ainda não preencheu o seu questionário de bem-estar diário. Leva apenas 1 minuto.</p>
+                    </div>
+                </div>
+                <button class="btn-notificacao-acao" (click)="irParaQuestionario()">
+                    Preencher Agora →
+                </button>
+            </div>
+
+            <div class="layout-central-grid">
+                <div class="coluna-esquerda-metricas">
+                    <div class="grelha-cartoes-premium">
+                        <div class="cartao-p">
+                            <span class="subtext-p">Próxima Consulta</span>
+                            <h2>{{ dataConsultaTexto }}</h2>
+                            <p class="detalhe-p">{{ medicoConsultaTexto }}</p>
+                            <span class="tag-p consulta">{{ descricaoConsultaTexto }}</span>
+                        </div>
+
+                        <div class="cartao-p">
+                            <span class="subtext-p">Semanas de Gestação</span>
+                            <h2>{{ semanaAtual }}</h2>
+                            <p class="detalhe-p">{{ trimestreTexto }}</p>
+                            <span class="tag-p curso">Em curso</span>
+                        </div>
+
+                        <div class="cartao-p">
+                            <span class="subtext-p">Peso do Bebé</span>
+                            <h2>{{ pesoBebe }}</h2>
+                            <p class="detalhe-p">Estimado</p>
+                            <span class="tag-p saudavel">Saudável</span>
+                        </div>
+                    </div>
+
+                    <div class="bloco-desenvolvimento-foto">
+                        <div class="container-foto-upload">
+                            <img [src]="fotoIlustracao" alt="Ilustração da Gestação" class="foto-outline-gravida">
+                        </div>
+                        <div class="desenvolvimento-lista">
+                            <h3>Desenvolvimento esta Semana</h3>
+                            <ul>
+                                <li *ngFor="let desenvolvimento of desenvolvimentosSemana">
+                                    <span class="check-icon">✓</span> {{ desenvolvimento }}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="cartao-marcos">
+                    <h3>Marcos Importantes</h3>
+                    <p class="sub-marcos">Acompanha o teu progresso</p>
+
+                    <div class="marcos-lista">
+                        <div class="marco-item" [ngClass]="{ 'concluido': semanaAtual > 8, 'atual': semanaAtual === 8, 'pendente': semanaAtual < 8 }">
+                            <div class="check-circulo">{{ semanaAtual >= 8 ? '✓' : '8' }}</div>
+                            <div class="marco-info">
+                                <strong>1ª Consulta Pré-Natal</strong>
+                                <span>Semana 8 <span class="tag-esta-semana" *ngIf="semanaAtual === 8">Esta semana</span></span>
+                            </div>
+                        </div>
+
+                        <div class="marco-item" [ngClass]="{ 'concluido': semanaAtual > 12, 'atual': semanaAtual === 12, 'pendente': semanaAtual < 12 }">
+                            <div class="check-circulo">{{ semanaAtual >= 12 ? '✓' : '12' }}</div>
+                            <div class="marco-info">
+                                <strong>1ª Ecografia (Trimestral)</strong>
+                                <span>Semana 12 <span class="tag-esta-semana" *ngIf="semanaAtual === 12">Esta semana</span></span>
+                            </div>
+                        </div>
+
+                        <div class="marco-item" [ngClass]="{ 'concluido': semanaAtual > 20, 'atual': semanaAtual === 20, 'pendente': semanaAtual < 20 }">
+                            <div class="check-circulo">{{ semanaAtual >= 20 ? '✓' : '20' }}</div>
+                            <div class="marco-info">
+                                <strong>Ecografia Morfológica</strong>
+                                <span>Semana 20 <span class="tag-esta-semana" *ngIf="semanaAtual === 20">Esta semana</span></span>
+                            </div>
+                        </div>
+
+                        <div class="marco-item" [ngClass]="{ 'concluido': semanaAtual > 24, 'atual': semanaAtual === 24, 'pendente': semanaAtual < 24 }">
+                            <div class="check-circulo">{{ semanaAtual >= 24 ? '✓' : '24' }}</div>
+                            <div class="marco-info">
+                                <strong>Teste de Glucose (Análises)</strong>
+                                <span>Semana 24 <span class="tag-esta-semana" *ngIf="semanaAtual === 24">Esta semana</span></span>
+                            </div>
+                        </div>
+
+                        <div class="marco-item" [ngClass]="{ 'concluido': semanaAtual > 28, 'atual': semanaAtual === 28, 'pendente': semanaAtual < 28 }">
+                            <div class="check-circulo">{{ semanaAtual >= 28 ? '✓' : '28' }}</div>
+                            <div class="marco-info">
+                                <strong>Vacina da Tosse Convulsa</strong>
+                                <span>Semana 28 <span class="tag-esta-semana" *ngIf="semanaAtual === 28">Esta semana</span></span>
+                            </div>
+                        </div>
+
+                        <div class="marco-item" [ngClass]="{ 'concluido': semanaAtual > 32, 'atual': semanaAtual === 32, 'pendente': semanaAtual < 32 }">
+                            <div class="check-circulo">{{ semanaAtual >= 32 ? '✓' : '32' }}</div>
+                            <div class="marco-info">
+                                <strong>Ecografia do 3º Trimestre</strong>
+                                <span>Semana 32 <span class="tag-esta-semana" *ngIf="semanaAtual === 32">Esta semana</span></span>
+                            </div>
+                        </div>
+
+                        <div class="marco-item" [ngClass]="{ 'concluido': semanaAtual > 36, 'atual': semanaAtual === 36, 'pendente': semanaAtual < 36 }">
+                            <div class="check-circulo">{{ semanaAtual >= 36 ? '✓' : '36' }}</div>
+                            <div class="marco-info">
+                                <strong>Exame do Estreptococo B</strong>
+                                <span>Semana 36 <span class="tag-esta-semana" *ngIf="semanaAtual === 36">Esta semana</span></span>
+                            </div>
+                        </div>
+
+                        <div class="marco-item" [ngClass]="{ 'concluido': semanaAtual > 40, 'atual': semanaAtual === 40, 'pendente': semanaAtual < 40 }">
+                            <div class="check-circulo">{{ semanaAtual >= 40 ? '✓' : '40' }}</div>
+                            <div class="marco-info">
+                                <strong>Data Provável do Parto</strong>
+                                <span>Semana 40 <span class="tag-esta-semana" *ngIf="semanaAtual === 40">Esta semana</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <section class="secao-educativa">
+                <div class="educativa-header">
+                    <div class="titulo-grupo">
+                        <h3>Conteúdos Educativos</h3>
+                    </div>
+                    <button class="btn-ver-todos" (click)="irParaTimeline()">Ver todos</button>
+                </div>
+
+                <div class="grelha-educativa">
+                    <div class="cartao-educativo-link" *ngFor="let artigo of conteudosEducativos" (click)="abrirLinkExterno(artigo.url)">
+                        <div class="educativo-imagem-topo">
+                            <img [src]="artigo.imagemUrl || 'assets/imagens/placeholder-saude.jpg'" alt="{{ artigo.titulo }}">
+                        </div>
+                        <div class="educativo-corpo">
+                            <span class="badge-categoria-simples">{{ artigo.categoria }}</span>
+                            <h4>{{ artigo.titulo }}</h4>
+                            <p>{{ artigo.descricao }}</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>

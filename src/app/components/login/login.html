@@ -1,0 +1,46 @@
+<div class="login-wrapper">
+  <div class="info-side">
+    <h1>Acompanhe a sua Gravidez :)</h1>
+    <p>Monitorize cada momento especial desta jornada única!</p>
+    <ul>
+      <li>Acompanhamento personalizado e seguro (físico + mental);</li>
+      <li>Gestão e marcação facilitada de consultas e exames;</li>
+      <li>Desenvolvimento do bebé ao longo da gestação;</li>
+    </ul>
+  </div>
+
+  <div class="login-side">
+    <div class="login-container">
+      
+      <div class="login-header">
+        <img src="logogestcare.png" alt="Logótipo do Portal" class="login-logo">
+        <h2>Bem-Vinda ao Portal GestCare!</h2>
+      </div> <select [(ngModel)]="tipoEscolhido" name="tipo">
+        <option value="" disabled selected>Selecione o perfil...</option>
+        <option value="gravida">Grávida</option>
+        <option value="obstetra">Médico(a) Obstetra</option>
+        <option value="admin">Administrador</option>
+      </select>
+      
+      <input type="email" placeholder="Email" [(ngModel)]="email" name="email">
+      <input type="password" placeholder="Password" [(ngModel)]="password" name="password">
+      
+      <div class="auto-fill-buttons">
+        <p class="auto-fill-label">Preenchimento Automático:</p>
+        <button type="button" class="btn-auto btn-gravida" (click)="preencherAuto('gravida')">
+          Grávida
+        </button>
+        <button type="button" class="btn-auto btn-medico" (click)="preencherAuto('obstetra')">
+          Médico Obstetra
+        </button>
+        <button type="button" class="btn-auto btn-admin" (click)="preencherAuto('admin')">
+          Administrador
+        </button>
+      </div>
+      
+      <button (click)="onLogin()">Entrar</button>
+      
+      <p *ngIf="mensagemErro" style="color: red; margin-top: 15px;">{{ mensagemErro }}</p>
+    </div>
+  </div>
+</div>

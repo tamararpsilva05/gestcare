@@ -1,0 +1,324 @@
+<div class="dashboard-container">
+
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Área da Grávida</h2>
+        </div>
+        <ul class="menu">
+            <li (click)="irParaInicio()" style="cursor: pointer;">Início</li>
+            <li (click)="irParaConsultas()" style="cursor: pointer;">Consultas</li>
+            <li (click)="irParaQuestionario()" style="cursor: pointer;">Questionário</li>
+            <li class="active" (click)="irParaAgenda()" style="cursor: pointer;">Agenda</li>
+            <li (click)="irParaTimeline()" style="cursor: pointer;">Timeline</li>
+        </ul>
+    </nav>
+
+    <div class="main-area">
+
+        <header class="top-header">
+            <div class="saudacao">
+                <span class="boas-vindas">Olá, <strong>{{ nome }}</strong>!</span>
+                <span class="sub-saudacao">Bem-vinda à sua Agenda</span>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-notificacoes-dashboard" routerLink="/notificacoes" type="button">
+                    <span class="icon-sino">🔔</span>
+                    <span class="texto-btn">Notificações</span>
+                    <span class="ponto-alerta-dashboard"></span>
+                </button>
+
+                <button class="btn-perfil-premium" type="button" (click)="irParaPerfil()">
+                    <div class="avatar-circle">👤</div>
+                    <span class="text-perfil">O Meu Perfil</span>
+                </button>
+
+                <button class="btn-sair-destacado" type="button" (click)="logout()">
+                    <span>Sair</span>
+                    <span class="icon-emoji-sair"></span>
+                </button>
+            </div>
+        </header>
+
+        <main class="content">
+            <div class="agenda-wrapper">
+        
+                <section class="weekly-calendar">
+                    <div class="calendar-header">
+                        <h3>O meu Planeamento Semanal</h3>
+                        <span class="current-month">{{ mesAnoAtual }}</span>
+                    </div>
+                    <div class="days-row">
+                        <div class="day-pill" *ngFor="let dia of diasSemana" [class.active]="dia.ativo"
+                            [class.has-appointment]="dia.temConsulta" (click)="selecionarDia(dia)">
+                            <span class="day-name">{{ dia.nome }}</span>
+                            <span class="day-number">{{ dia.num }}</span>
+                            <span *ngIf="dia.temConsulta" class="appointment-indicator-dot"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="agenda-grid-layout">
+
+                    <div class="left-main-column">
+
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                            <h2 class="section-title" style="margin: 0;">
+                                {{ diaSelecionado === 'todos' ? 'Planeamento de Marcações' : 'Consultas para o Dia ' +
+                                diaSelecionado }}
+                            </h2>
+                            <button *ngIf="diaSelecionado !== 'todos'" class="btn-cancel"
+                                style="padding: 8px 16px; font-size: 0.85rem;" (click)="mostrarTodasAsConsultas()">
+                                Ver Todas
+                            </button>
+                        </div>
+
+                        <div class="appointments-list">
+                            <h4>Próximas consultas</h4>
+                            <ng-container
+                                *ngIf="(diaSelecionado === 'todos' ? consultasFuturas : consultasFiltradas)?.length; else semFuturas">
+                                <div class="appointment-card"
+                                    *ngFor="let consulta of (diaSelecionado === 'todos' ? consultasFuturas : consultasFiltradas); trackBy: trackByConsulta">
+                                    <div class="date-badge" [class.badge-ecografia]="consulta.isEcografia">
+                                        <span class="day">{{ consulta.dia }}</span>
+                                        <span class="month">{{ consulta.mes }}</span>
+                                    </div>
+
+                                    <div class="doctor-details">
+                                        <div class="doctor-avatar-initials">{{ consulta.iniciais }}</div>
+                                        <div class="doctor-text">
+                                            <h4>{{ consulta.medico }}</h4>
+                                            <span class="specialty">{{ consulta.especialidade }}</span>
+                                            <span class="room"> {{ consulta.sala }}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="status-details">
+                                        <div class="time-tag"> {{ consulta.hora }}</div>
+
+                                        <span *ngIf="consultaJaOcorreu(consulta)" class="status-badge concluido">
+                                            Concluída
+                                        </span>
+
+                                        <ng-container *ngIf="!consultaJaOcorreu(consulta)">
+                                            <span *ngIf="consulta.estado === 0" class="status-badge badge-pendente">
+                                                Pendente
+                                            </span>
+
+                                            <span *ngIf="consulta.estado === 1" class="status-badge badge-confirmado">
+                                                Confirmado
+                                            </span>
+                                        </ng-container>
+                                    </div>
+
+                                    <div class="action-area">
+                                        <button *ngIf="consultaPodeSerDesmarcada(consulta); else consultaBloqueada"
+                                            class="btn-cancel" (click)="desmarcarConsulta(consulta)">Desmarcar</button>
+                                        <ng-template #consultaBloqueada>
+                                            <span class="acao-indisponivel">{{ textoBloqueioDesmarcacao(consulta)
+                                                }}</span>
+                                        </ng-template>
+                                    </div>
+                                </div>
+                            </ng-container>
+                            <ng-template #semFuturas>
+                                <div class="empty-state">
+                                    <p>Não há próximas consultas agendadas.</p>
+                                </div>
+                            </ng-template>
+                        </div>
+
+                        <section class="exames-section" style="margin-top: 32px;">
+                            <div class="section-subheader">
+                                <h4>Próximos exames</h4>
+                            </div>
+                            <ng-container
+                                *ngIf="(diaSelecionado === 'todos' ? examesFuturos : examesFiltrados)?.length; else semExames">
+                                <div class="appointments-list">
+                                    <div class="appointment-card exame"
+                                        *ngFor="let examen of (diaSelecionado === 'todos' ? examesFuturos : examesFiltrados); trackBy: trackByConsulta">
+                                        <div class="date-badge" [class.badge-ecografia]="examen.tipo === 'Ecografia'">
+                                            <span class="day">{{ examen.dia }}</span>
+                                            <span class="month">{{ examen.mes }}</span>
+                                        </div>
+
+                                        <div class="doctor-details">
+                                            <div class="doctor-avatar-initials">{{ examen.iniciais }}</div>
+                                            <div class="doctor-text">
+                                                <h4>{{ examen.exameNome }}</h4>
+                                                <span class="room" *ngIf="examen.medico"
+                                                    style="display: block; margin-top: 2px; color: #333; font-weight: 500;">
+                                                    {{ examen.medico }} <small
+                                                        style="color: #666; font-weight: normal;">({{ examen.tipo
+                                                        }})</small>
+                                                </span>
+                                                <span class="specialty" *ngIf="examen.especialidade">{{
+                                                    examen.especialidade }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="status-details">
+                                            <div class="time-tag"> {{ examen.hora }}</div>
+
+                                            <span *ngIf="exameJaOcorreu(examen)" class="status-badge concluido">
+                                                Concluído
+                                            </span>
+
+                                            <span *ngIf="!exameJaOcorreu(examen)" class="status-badge"
+                                                [ngClass]="examen.statusClass">
+                                                {{ examen.statusTexto }}
+                                            </span>
+                                        </div>
+
+                                        <div class="action-area">
+                                            <button *ngIf="examePodeSerDesmarcado(examen); else exameBloqueado"
+                                                class="btn-cancel" (click)="desmarcarExame(examen)">Desmarcar</button>
+                                            <ng-template #exameBloqueado>
+                                                <span class="acao-indisponivel">{{ textoBloqueioDesmarcacao(examen)
+                                                    }}</span>
+                                            </ng-template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ng-container>
+                            <ng-template #semExames>
+                                <div class="empty-state">
+                                    <p>Não há exames agendados.</p>
+                                </div>
+                            </ng-template>
+                        </section>
+
+                    </div>
+
+                    <div class="right-sidebar-column">
+
+                        <div class="mini-metrics-stack">
+                            <div class="small-metric-card">
+
+                                <div>
+                                    <h4>Próxima Consulta</h4>
+                                    <p *ngIf="proximaConsulta">
+                                        {{ proximaConsultaTexto }} <span *ngIf="proximaConsulta.hora">· {{
+                                            proximaConsulta.hora }}</span>
+                                    </p>
+                                    <p *ngIf="!proximaConsulta">Sem consultas próximas</p>
+                                </div>
+                            </div>
+
+                            <div class="small-metric-card">
+                                <div>
+                                    <h4>Total Agendado</h4>
+                                    <p>{{ consultasFuturas.length + examesFuturos.length }} Marcações</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <section class="past-consultations-section" *ngIf="historicoCompleto?.length">
+                            <div class="past-header">
+                                <!-- Atualizamos a contagem para usar a nova lista -->
+                                <h4> Histórico ({{ historicoCompleto.length }})</h4>
+                                <button class="btn-link" (click)="togglePast()">
+                                    {{ mostrarPassadas ? 'Ocultar' : 'Ver' }}
+                                </button>
+                            </div>
+
+                            <div class="past-sidebar-list" *ngIf="mostrarPassadas">
+                                <div class="past-item-mini" *ngFor="let item of historicoCompleto">
+
+                                    <div class="past-date-mini">
+                                        <span class="mini-day">{{ item.dia }}</span>
+                                        <span class="mini-month">{{ item.mes }}</span>
+                                    </div>
+
+                                    <div class="past-info-mini">
+                                        <span class="tipo-badge">
+                                            {{ item.medico ? 'Consulta' : 'Exame' }}
+                                        </span>
+
+                                        <h5 *ngIf="item.medico">{{ item.medico }}</h5>
+                                        <h5 *ngIf="!item.medico">{{ item.nomeExame }}</h5>
+
+                                        <span class="mini-specialty" *ngIf="item.medico">
+                                            {{ item.especialidade }}
+                                        </span>
+                                        <span class="mini-specialty" *ngIf="!item.medico">
+                                            {{ item.local }}
+                                        </span>
+                                    </div>
+
+                                    <div class="past-status-mini" title="Concluído">✓</div>
+                                </div>
+                            </div>
+                            <div id="toast-notificacao" class="toast-mensagem">
+                                <span class="toast-icone">✓</span>
+                                <span class="toast-texto" id="texto-toast">Consulta desmarcada com sucesso!</span>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+    </div>
+    <div class="modal-overlay" *ngIf="mostrarConfirmacaoConsulta">
+        <div class="modal-box">
+            <h3>Confirmar desmarcação</h3>
+            <p>Tem a certeza que quer desmarcar a consulta com
+                <strong>{{ consultaParaDesmarcar?.medico || 'o médico' }}</strong>
+                às <strong>{{ consultaParaDesmarcar?.hora }}</strong>?
+            </p>
+            
+            <div class="motivo-section">
+                <label for="motivoConsulta"><strong>Indique o motivo que a levou a desmarcar a sua consulta:</strong></label>
+                <select id="motivoConsulta" [(ngModel)]="motivoDesmarcacaoConsulta" class="motivo-select">
+                    <option value="">Selecione um motivo...</option>
+                    <option *ngFor="let motivo of motivosPredefinidos" [value]="motivo">{{ motivo }}</option>
+                </select>
+                <input 
+                    *ngIf="motivoDesmarcacaoConsulta === 'Outro motivo'" 
+                    type="text" 
+                    [(ngModel)]="motivoDesmarcacaoConsulta" 
+                    placeholder="Escreve o motivo aqui..." 
+                    class="motivo-input"
+                >
+            </div>
+
+            <div class="modal-botoes">
+                <button class="btn-cancelar-modal" (click)="cancelarDesmarcacaoConsulta()">Cancelar</button>
+                <button class="btn-confirmar-modal" (click)="confirmarDesmarcacaoConsulta()">Sim, desmarcar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" *ngIf="mostrarConfirmacaoExame">
+        <div class="modal-box">
+            <h3>Confirmar desmarcação</h3>
+            <p>Tem a certeza que quer desmarcar o exame
+                <strong>{{ exameParaDesmarcar?.exameNome }}</strong>
+                às <strong>{{ exameParaDesmarcar?.hora }}</strong>?
+            </p>
+
+            <div class="motivo-section">
+                <label for="motivoExame"><strong>Indique o motivo que a levou a desmarcar o seu exame:</strong></label>
+                <select id="motivoExame" [(ngModel)]="motivoDesmarcacaoExame" class="motivo-select">
+                    <option value="">Selecione um motivo...</option>
+                    <option *ngFor="let motivo of motivosPredefinidos" [value]="motivo">{{ motivo }}</option>
+                </select>
+                <input 
+                    *ngIf="motivoDesmarcacaoExame === 'Outro motivo'" 
+                    type="text" 
+                    [(ngModel)]="motivoDesmarcacaoExame" 
+                    placeholder="Escreva o motivo aqui..." 
+                    class="motivo-input"
+                >
+            </div>
+
+            <div class="modal-botoes">
+                <button class="btn-cancelar-modal" (click)="cancelarDesmarcacaoExame()">Cancelar</button>
+                <button class="btn-confirmar-modal" (click)="confirmarDesmarcacaoExame()">Sim, desmarcar</button>
+            </div>
+        </div>
+    </div>
+</div>

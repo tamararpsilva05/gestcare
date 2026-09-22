@@ -1,0 +1,131 @@
+<div class="dashboard-container">
+
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Área do Médico</h2>
+        </div>
+        <ul class="menu">
+            <li (click)="voltar()">Início</li>
+            <li (click)="irParaUtentes()">Utentes</li>
+            <li (click)="irParaMarcarConsulta()">Marcar Consulta</li>
+            <li (click)="irParaMarcarExame()">Marcar Exame</li>
+            <li class="active">Agenda Clínica</li>
+            <li (click)="irParaPerfil()">Perfil</li>
+            <li (click)="irParaAnalise()">Análise Questionários</li>
+        </ul>
+    </nav>
+
+    <div class="main-area">
+
+        <header class="top-header">
+            <div class="saudacao">
+                <span class="boas-vindas">Agenda Clínica</span>
+                <span class="sub-saudacao">Consulta as tuas consultas agendadas</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn-voltar" (click)="voltar()">← Voltar</button>
+            </div>
+        </header>
+
+        <main class="content">
+            <div class="agenda-grid">
+                <div class="calendario-card">
+                    <div class="cal-header">
+                        <button class="btn-nav" (click)="mesAnterior()">‹</button>
+                        <span class="mes-titulo">{{ nomesMeses[mesSelecionado] }} {{ anoSelecionado }}</span>
+                        <button class="btn-nav" (click)="proximoMes()">›</button>
+                    </div>
+                    <div class="cal-grid">
+                        <div class="dia-semana" *ngFor="let d of ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']">{{ d }}
+                        </div>
+                        <div *ngFor="let dia of diasDoMes" class="dia-cell" [class.vazio]="!dia"
+                            [class.hoje]="eHoje(dia)" [class.selecionado]="dia === diaSelecionado"
+                            [class.tem-consulta]="temConsulta(dia)" (click)="selecionarDia(dia)">
+                            <span *ngIf="dia">{{ dia }}</span>
+                            <div class="ponto" *ngIf="temConsulta(dia)"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="consultas-card">
+
+                    <div class="consultas-header">
+                        <h3>{{ diaSelecionado }} de {{ nomesMeses[mesSelecionado] }} de {{ anoSelecionado }}</h3>
+                        <span class="badge-total">{{ consultasDoDia.length }} consulta(s)</span>
+                    </div>
+
+                    <div class="carregando" *ngIf="carregando">
+                        <p>A carregar...</p>
+                    </div>
+
+                    <div class="sem-consultas" *ngIf="!carregando && consultasDoDia.length === 0">
+                        <p>Sem consultas para este dia.</p>
+                    </div>
+
+                    <div class="consultas-lista" *ngIf="!carregando && consultasDoDia.length > 0">
+                        <div class="consultas-lista" *ngIf="!carregando && consultasDoDia.length > 0">
+                            <div class="consulta-item" *ngFor="let consulta of consultasDoDia">
+                                <div class="consulta-hora">{{ consulta.horarioConsulta }}</div>
+                                <div class="consulta-info">
+                                    <span class="consulta-paciente">{{ consulta.idGravida?.nome || 'Paciente' }}</span>
+                                    <span class="consulta-local">{{ consulta.local }}</span>
+                                    <span class="consulta-desc" *ngIf="consulta.descricaoConsulta">{{
+                                        consulta.descricaoConsulta }}</span>
+                                </div>
+                                <div class="consulta-direita">
+                                    <div class="consulta-estado"
+                                        [class.estado-realizada]="getEstado(consulta) === 'Realizada'"
+                                        [class.estado-confirmada]="getEstado(consulta) === 'Confirmada'"
+                                        [class.estado-pendente]="getEstado(consulta) === 'Pendente'"
+                                        [class.estado-cancelada]="getEstado(consulta) === 'Cancelada'">
+                                        {{ getEstado(consulta) }}
+                                    </div>
+                                    <button class="btn-desmarcar" *ngIf="consultaPodeSerDesmarcada(consulta)"
+                                        (click)="desmarcarConsulta(consulta)">
+                                        Desmarcar
+                                    </button>
+                                    <span class="acao-indisponivel" *ngIf="!consultaPodeSerDesmarcada(consulta)">
+                                        {{ textoBloqueioDesmarcacao(consulta) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="toast-agenda" *ngIf="mensagemToast">
+                            {{ mensagemToast }}
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+    <div class="modal-overlay" *ngIf="mostrarConfirmacao">
+        <div class="modal-box">
+            <h3>Confirmar desmarcação</h3>
+            <p>Tem a certeza que quer desmarcar a consulta de
+                <strong>{{ consultaParaDesmarcar?.idGravida?.nome || 'Paciente' }}</strong>
+                marcada para <strong>{{ consultaParaDesmarcar?.horarioConsulta }}</strong>?
+            </p>
+
+            <div class="motivo-section">
+                <label for="motivoDesmarcacao"><strong>Por favor, indica o motivo:</strong></label>
+                <select id="motivoDesmarcacao" [(ngModel)]="motivoDesmarcacao" class="motivo-select">
+                    <option value="">Seleciona um motivo...</option>
+                    <option *ngFor="let motivo of motivosPredefinidos" [value]="motivo">{{ motivo }}</option>
+                </select>
+                <input 
+                    *ngIf="motivoDesmarcacao === 'Outro motivo'" 
+                    type="text" 
+                    [(ngModel)]="motivoDesmarcacao" 
+                    placeholder="Escreve o motivo aqui..." 
+                    class="motivo-input"
+                >
+            </div>
+
+            <div class="modal-botoes">
+                <button class="btn-cancelar-modal" (click)="cancelarDesmarcacao()">Cancelar</button>
+                <button class="btn-confirmar-modal" (click)="confirmarDesmarcacao()">Sim, desmarcar</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,191 @@
+<div class="dashboard-container">
+
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Administração</h2>
+        </div>
+        <ul class="menu">
+            <li [class.active]="paginaAtiva === 'medicos'" (click)="mudarPagina('medicos')">Médicos</li>
+            <li [class.active]="paginaAtiva === 'gravidas'" (click)="mudarPagina('gravidas')">Grávidas</li>
+        </ul>
+    </nav>
+
+    <div class="main-area">
+
+        <header class="top-header">
+            <div class="saudacao">
+                <span class="boas-vindas">Olá, <strong>{{ nomeAdmin }}</strong>!</span>
+                <span class="sub-saudacao">Painel de Administração</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn-sair-destacado" (click)="logout()">Sair</button>
+            </div>
+        </header>
+
+        <main class="content">
+
+            <div class="mensagem-sucesso" *ngIf="mensagemSucesso">{{ mensagemSucesso }}</div>
+            <div class="mensagem-erro" *ngIf="mensagemErro">{{ mensagemErro }}</div>
+
+            
+            <div *ngIf="paginaAtiva === 'medicos'">
+
+                <div class="section-header">
+                    <h3>Médicos Registados</h3>
+                    <button class="btn-novo-medico" (click)="mostrarFormulario = !mostrarFormulario">
+                        {{ mostrarFormulario ? 'Cancelar' : '+ Novo Médico' }}
+                    </button>
+                </div>
+
+                <div class="formulario-card" *ngIf="mostrarFormulario">
+                    <h4>Novo Médico</h4>
+                    <div class="campos-grid">
+                        <div class="campo">
+                            <label>Nome completo *</label>
+                            <input type="text" [(ngModel)]="novoMedico.nome" placeholder="Ex: Dra. Ana Silva" />
+                        </div>
+                        <div class="campo">
+                            <label>Email *</label>
+                            <input type="email" [(ngModel)]="novoMedico.email"
+                                placeholder="Ex: ana.silva@hospital.com" />
+                        </div>
+                        <div class="campo">
+                            <label>Número de Ordem * (Ex: OM1234)</label>
+                            <input type="text" [(ngModel)]="novoMedico.numeroOrdem" placeholder="Ex: OM1234" />
+                        </div>
+                        <div class="campo">
+                            <label>Idade (25-75 anos)</label>
+                            <input type="number" [(ngModel)]="novoMedico.idadeObstetra" placeholder="Ex: 45" min="25"
+                                max="75" />
+                        </div>
+                        <div class="campo">
+                            <label>Género *</label>
+                            <select [(ngModel)]="novoMedico.genero">
+                                <option value="">Selecione...</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Feminino">Feminino</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="erro-formulario" *ngIf="erroFormulario">{{ erroFormulario }}</div>
+                    <div class="botoes">
+                        <button class="btn-guardar" (click)="criarMedico()" [disabled]="guardando">
+                            {{ guardando ? 'A criar...' : 'Criar Médico' }}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="carregando" *ngIf="carregando">
+                    <p>A carregar médicos...</p>
+                </div>
+
+                <div class="tabela-container" *ngIf="!carregando">
+                    <div class="sem-registos" *ngIf="medicos.length === 0">
+                        <p>Ainda não há médicos registados.</p>
+                    </div>
+                    <table class="tabela" *ngIf="medicos.length > 0">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Nº Ordem</th>
+                                <th>Idade</th>
+                                <th>Género</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let medico of medicos">
+                                <td>{{ medico.nome }}</td>
+                                <td>{{ medico.email }}</td>
+                                <td>{{ medico.numeroOrdem }}</td>
+                                <td>{{ medico.idadeObstetra || '—' }}</td>
+                                <td>{{ medico.genero || '—' }}</td>
+                                <td>
+                                    <button class="btn-eliminar" (click)="confirmarEliminar(medico)">Eliminar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+            <div *ngIf="paginaAtiva === 'gravidas'">
+
+                <div class="section-header">
+                    <h3>Grávidas Registadas</h3>
+                </div>
+
+                <div class="carregando" *ngIf="carregandoGravidas">
+                    <p>A carregar grávidas...</p>
+                </div>
+
+                <div class="tabela-container" *ngIf="!carregandoGravidas">
+                    <div class="sem-registos" *ngIf="gravidas.length === 0">
+                        <p>Ainda não há grávidas registadas.</p>
+                    </div>
+                    <table class="tabela" *ngIf="gravidas.length > 0">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Idade</th>
+                                <th>Semanas</th>
+                                <th>Médico</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let gravida of gravidas">
+                                <td>{{ gravida.nome }}</td>
+                                <td>{{ gravida.email }}</td>
+                                <td>{{ gravida.idade || '—' }}</td>
+                                <td>{{ gravida.semanasGestacao || '—' }}</td>
+                                <td>{{ gravida.idObstetra?.nome || '—' }}</td>
+                                <td>
+                                    <button class="btn-eliminar" (click)="confirmarEliminarGravida(gravida)">Eliminar</button>
+                                    <button class="btn-desativar" *ngIf="gravida.estado === 1" (click)="toggleEstadoGravida(gravida)">Desativar</button>
+                                    <button class="btn-ativar" *ngIf="gravida.estado === 0" (click)="toggleEstadoGravida(gravida)">Ativar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    
+    <div class="modal-overlay" *ngIf="mostrarModalEliminar">
+        <div class="modal-box">
+            <h3>Confirmar eliminação</h3>
+            <p>Tem a certeza que quer eliminar o médico
+                <strong>{{ medicoParaEliminar?.nome }}</strong>?
+                Esta ação não pode ser revertida.
+            </p>
+            <div class="modal-botoes">
+                <button class="btn-cancelar-modal" (click)="cancelarEliminar()">Cancelar</button>
+                <button class="btn-confirmar-modal" (click)="eliminarMedico()">Sim, eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="modal-overlay" *ngIf="mostrarModalEliminarGravida">
+        <div class="modal-box">
+            <h3>Confirmar eliminação</h3>
+            <p>Tem a certeza que quer eliminar a grávida
+                <strong>{{ gravidaParaEliminar?.nome }}</strong>?
+                Esta ação não pode ser revertida. Se pretender proceder para uma ação revertível, opte por desativar a utente.
+            </p>
+            <div class="modal-botoes">
+                <button class="btn-cancelar-modal" (click)="cancelarEliminarGravida()">Cancelar</button>
+                <button class="btn-confirmar-modal" (click)="eliminarGravida()">Sim, eliminar</button>
+            </div>
+        </div>
+    </div>
+
+</div>

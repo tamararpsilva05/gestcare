@@ -1,0 +1,130 @@
+<div class="dashboard-container">
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Área da Grávida</h2>
+        </div>
+        <ul class="menu">
+            <li (click)="irParaInicio()" style="cursor: pointer;">Início</li>
+            <li (click)="irParaConsultas()" style="cursor: pointer;">Consultas</li>
+            <li (click)="irParaQuestionario()" style="cursor: pointer;">Questionário</li>
+            <li (click)="irParaAgenda()" style="cursor: pointer;">Agenda</li>
+            <li (click)="irParaTimeline()" style="cursor: pointer;">Timeline</li>
+        </ul>
+    </nav>
+
+    <div class="main-area">
+        <header class="top-header">
+            <div class="saudacao">
+                 <span class="boas-vindas">Olá, <strong>{{ nome }}</strong>!</span>
+                <span class="sub-saudacao">A sua linha do tempo de cuidados e consultas</span>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-notificacoes-dashboard" routerLink="/notificacoes">
+                    <span class="icon-sino">🔔</span>
+                    <span class="texto-btn">Notificações</span>
+                    <span class="ponto-alerta-dashboard" *ngIf="totalFuturas > 0"></span>
+                </button>
+                <button class="btn-perfil-premium" (click)="irParaPerfil()">
+                    <div class="avatar-circle">👤</div>
+                    <span class="text-perfil">O Meu Perfil</span>
+                </button>
+                <button class="btn-sair-destacado" (click)="logout()">
+                    <span>Sair</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="content conteudo-pagina">
+
+
+            <ng-container *ngIf="!loading">
+                <div class="painel-resumo">
+                    <div class="card-resumo rosa">
+                        <span class="numero-resumo">{{ totalFuturas }}</span>
+                        <span class="label-resumo">Pendentes de Confirmação</span>
+                    </div>
+                </div>
+
+                <div class="layout-duas-colunas">
+
+                    <div class="coluna-principal">
+                        <div class="abas-navegacao">
+                            <button [class.active]="abaAtiva === 'todas'" (click)="mudarAba('todas')">Todas as
+                                Consultas</button>
+                            <button [class.active]="abaAtiva === 'amanha'" (click)="mudarAba('amanha')">Para
+                                Amanhã</button>
+                        </div>
+
+                        <div class="timeline-container" *ngIf="notificacoesFiltradas.length > 0">
+                            <div class="timeline-item" *ngFor="let n of notificacoesFiltradas">
+                                <div class="timeline-dot" [class.dot-confirmado]="n.confirmada"></div>
+
+                                <div class="card-notificacao" [ngClass]="[n.tipo, n.nova ? 'card-novo' : '']"
+                                    [class.confirmada]="n.confirmada">
+                                    <div class="icone-alerta">
+                                        <svg *ngIf="n.tipo === 'consulta'" width="24" height="24" viewBox="0 0 24 24"
+                                            fill="none" stroke="#d19a9a" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                            <path d="M9 16h6"></path>
+                                            <path d="M12 13v6"></path>
+                                        </svg>
+
+                                        <svg *ngIf="n.tipo === 'exame'" width="24" height="24" viewBox="0 0 24 24"
+                                            fill="none" stroke="#2a4d46" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="conteudo-alerta">
+                                        <div class="meta-alerta">
+                                            <span class="badge-tempo" [class.badge-verde]="n.confirmada">
+                                                {{ n.confirmada ? 'Confirmada' : n.dataFormatada }}
+                                            </span>
+                                            <span class="data-sub">{{ n.dataVisual }}</span>
+                                        </div>
+                                        <div class="badge-novo" *ngIf="n.nova">
+                                            {{ n.tipo === 'exame' ? 'NOVO EXAME' : 'NOVA CONSULTA' }}
+                                        </div>
+                                        <h3>{{ n.titulo }}</h3>
+                                        <p>{{ n.descricao }}</p>
+                                    </div>
+
+                                    <div class="acoes-alerta">
+                                        <button class="btn-confirmar" *ngIf="!n.confirmada"
+                                            (click)="confirmarPresenca(n)" [disabled]="idAConfirmar === n.id">
+                                            {{ idAConfirmar === n.id ? 'A guardar...' : 'Confirmar Presença' }}
+                                        </button>
+
+                                        <div class="status-confirmado" *ngIf="n.confirmada">
+                                            Presença Confirmada
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="estado-vazio" *ngIf="notificacoesFiltradas.length === 0">
+                            <div class="icone-vazio"></div>
+                            <h3>Agenda Livre!</h3>
+                            <p>Não há consultas agendadas para este filtro.</p>
+                        </div>
+                    </div>
+
+                    <div class="coluna-lateral">
+                        <div class="cartao-dica">
+                            <h3>Dica da Semana</h3>
+                            <p>"Mantenha-se hidratada! Beber água é essencial para manter a quantidade adequada de
+                                líquido amniótico. Confirme sempre a sua presença nas consultas com antecedência."</p>
+                        </div>
+                    </div>
+
+                </div>
+            </ng-container>
+        </main>
+    </div>
+</div>

@@ -1,0 +1,195 @@
+<div class="dashboard-container">
+
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Área da Grávida</h2>
+        </div>
+        <ul class="menu">
+            <li (click)="voltarAoDashboard()" style="cursor: pointer;">Início</li>
+            <li (click)="irParaConsultas()" style="cursor: pointer;">Consultas</li>
+            <li (click)="irParaQuestionario()" style="cursor: pointer;">Questionário</li>
+            <li (click)="irParaAgenda()" style="cursor: pointer;">Agenda</li>
+            <li (click)="irParaTimeline()" style="cursor: pointer;">Timeline</li>
+        </ul>
+    </nav>
+
+    <div class="main-area">
+
+        <header class="top-header">
+            <div class="saudacao">
+                <span class="boas-vindas">Olá, <strong>{{ nome }}</strong>!</span>
+                <span class="sub-saudacao">Bem-vinda ao seu Perfil Pessoal</span>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-notificacoes-dashboard" routerLink="/notificacoes" type="button">
+                    <span class="icon-sino">🔔</span>
+                    <span class="texto-btn">Notificações</span>
+                    <span class="ponto-alerta-dashboard"></span>
+                </button>
+
+                <button class="btn-perfil-premium" type="button">
+                    <div class="avatar-circle">👤</div>
+                    <span class="text-perfil">O Meu Perfil</span>
+                </button>
+
+                <button class="btn-sair-destacado" type="button" (click)="logout()">
+                    <span>Sair</span>
+                    <span class="icon-emoji-sair"></span>
+                </button>
+            </div>
+        </header>
+
+        <main class="content">
+            <div class="perfil-container">
+                <div class="perfil-card">
+                    <div class="perfil-header">
+                        <div class="avatar-large">👩‍🍼</div>
+                        <div>
+                            <h1>{{ nome }}</h1>
+                            <p class="subtitulo">Perfil da grávida</p>
+                        </div>
+                    </div>
+
+                    <div class="perfil-section">
+                        <h2>Informações pessoais</h2>
+                        <div class="perfil-grid">
+                            <div>
+                                <p class="label">Nome</p>
+                                <ng-container *ngIf="!editMode; else editNome">{{ nome }}</ng-container>
+                                <ng-template #editNome>
+                                    <input type="text" [(ngModel)]="nome" class="perfil-input" />
+                                </ng-template>
+                            </div>
+                            <div>
+                                <p class="label">Email</p>
+                                <ng-container *ngIf="!editMode; else editEmail">{{ email }}</ng-container>
+                                <ng-template #editEmail>
+                                    <input type="email" [(ngModel)]="email" class="perfil-input" />
+                                </ng-template>
+                            </div>
+                            <div>
+                                <p class="label">Idade</p>
+                                <ng-container *ngIf="!editMode; else editIdade">{{ idade }}</ng-container>
+                                <ng-template #editIdade>
+                                    <input type="number" [(ngModel)]="idade" class="perfil-input" />
+                                </ng-template>
+                            </div>
+                            <div>
+                                <p class="label">Semanas de gestação</p>
+                                <ng-container *ngIf="!editMode; else editSemanas">{{ semanasGestacao }}
+                                    semanas</ng-container>
+                                <ng-template #editSemanas>
+                                    <input type="number" [(ngModel)]="semanasGestacao" min="0" max="42"
+                                        class="perfil-input" />
+                                    <div *ngIf="erroSemanas" class="erro-caixa">
+                                        {{ erroSemanas }}
+                                    </div>
+                                </ng-template>
+                            </div>
+                            <div>
+                                <p class="label">Obstetra responsável</p>
+                                <p class="texto-estatico">{{ obstetraNome }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="perfil-section">
+                        <h2>Ficha Médica e Acompanhamento</h2>
+                        <div class="perfil-grid">
+
+                            <div>
+                                <p class="label">Grupo Sanguíneo</p>
+                                <span class="badge-sangue" *ngIf="grupoSanguineo">{{ grupoSanguineo }}</span>
+                                <span *ngIf="!grupoSanguineo" class="texto-estatico">Não definido</span>
+                            </div>
+
+                            <div>
+                                <p class="label">Alergias</p>
+                                <ng-container *ngIf="!editMode; else editAlergias">{{ alergias || 'Nenhuma'
+                                    }}</ng-container>
+                                <ng-template #editAlergias>
+                                    <input type="text" [(ngModel)]="alergias" class="perfil-input" />
+                                </ng-template>
+                            </div>
+
+                            <div>
+                                <p class="label">Morada</p>
+                                <ng-container *ngIf="!editMode; else editMorada">{{ morada || 'Não definida'
+                                    }}</ng-container>
+                                <ng-template #editMorada>
+                                    <input type="text" [(ngModel)]="morada" class="perfil-input" />
+                                </ng-template>
+                            </div>
+
+                            <div>
+                                <p class="label">Nome do Contacto de Emergência</p>
+                                <ng-container *ngIf="!editMode; else editEmergenciaNome">
+                                    {{ contactoEmergenciaNome || 'Não definido' }}
+                                </ng-container>
+                                <ng-template #editEmergenciaNome>
+                                    <input type="text" [(ngModel)]="contactoEmergenciaNome"
+                                        placeholder="Ex: Pedro (Marido)" class="perfil-input" />
+                                </ng-template>
+                            </div>
+
+                            <div>
+                                <p class="label">Telemóvel de Emergência</p>
+                                <ng-container *ngIf="!editMode; else editEmergenciaTelemovel">
+                                    {{ contactoEmergenciaTelemovel || 'Não definido' }}
+                                </ng-container>
+                                <ng-template #editEmergenciaTelemovel>
+                                    <input type="text" [(ngModel)]="contactoEmergenciaTelemovel"
+                                        placeholder="Telemóvel (9 dígitos)" maxlength="9" class="perfil-input" />
+                                    <div *ngIf="erroTelemovel" class="erro-caixa">
+                                        {{ erroTelemovel }}
+                                    </div>
+                                </ng-template>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="perfil-section">
+                        <h2>Alterar Password</h2>
+                        <div class="perfil-grid">
+                            <div>
+                                <p class="label">Nova password</p>
+                                <input type="password" [(ngModel)]="novaPassword" placeholder="Mínimo 6 caracteres"
+                                    class="perfil-input" />
+                            </div>
+                            <div>
+                                <p class="label">Confirmar nova password</p>
+                                <input type="password" [(ngModel)]="confirmarPassword"
+                                    placeholder="Repete a nova password" class="perfil-input" />
+                            </div>
+                        </div>
+                        <div class="erro-caixa" *ngIf="erroPassword">{{ erroPassword }}</div>
+                        <div class="toast-sucesso" *ngIf="sucessoPassword">
+                            <p>{{ sucessoPassword }}</p>
+                        </div>
+                        <button type="button" class="btn-salvar" style="margin-top: 12px;" (click)="alterarPassword()">
+                            Alterar Password
+                        </button>
+                    </div>
+
+                    <div class="acoes-perfil">
+                        <button type="button" class="btn-voltar" (click)="voltarAoDashboard()">Voltar ao Início</button>
+                        <ng-container *ngIf="!editMode; else editarActions">
+                            <button type="button" class="btn-editar" (click)="editarPerfil()">Editar Perfil</button>
+                        </ng-container>
+                        <ng-template #editarActions>
+                            <button type="button" class="btn-salvar" (click)="salvarPerfil()">Salvar</button>
+                            <button type="button" class="btn-cancelar" (click)="cancelarEdicao()">Cancelar</button>
+                        </ng-template>
+                    </div>
+                </div>
+
+                <div *ngIf="mensagemSucesso" class="toast-sucesso">
+                    <p>{{ mensagemSucesso }}</p>
+                </div>
+            </div>
+        </main>
+
+    </div>
+</div>

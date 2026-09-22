@@ -1,0 +1,141 @@
+<div class="dashboard-container">
+
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h2>Área do Médico</h2>
+    </div>
+    <ul class="menu">
+      <li (click)="voltar()">Início</li>
+      <li (click)="irParaUtentes()">Utentes</li>
+      <li class="active">Marcar Consulta</li>
+      <li (click)="irParaMarcarExame()">Marcar Exame</li>
+      <li (click)="irParaAgenda()">Agenda Clínica</li>
+      <li (click)="irParaPerfil()">Perfil</li>
+      <li (click)="irParaAnalise()">Análise Questionários</li>
+    </ul>
+  </nav>
+
+  <div class="main-area">
+
+    <header class="top-header">
+      <div class="saudacao">
+        <span class="boas-vindas">Marcar Consulta</span>
+        <span class="sub-saudacao">Agende uma consulta para uma das suas utentes</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-voltar-header" (click)="voltar()">← Voltar</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="agendamento-wrapper">
+
+        <div class="form-box" *ngIf="!agendadoComSucesso">
+          <form class="formulario">
+            <div class="input-group" [class.grupo-erro]="erroGravida">
+              <label>Selecionar Utente *</label>
+              <select [(ngModel)]="gravidaSelecionada" name="gravida" (change)="alterouGravida()">
+                <option value="">Selecione uma utente...</option>
+                <option *ngFor="let g of gravidas" [value]="g._id">{{ g.nome }}</option>
+              </select>
+            </div>
+            <div class="input-group" [class.grupo-erro]="erroData">
+              <label>Escolha o Dia *</label>
+              <input type="date" [(ngModel)]="dataSelecionada" name="data"
+                [min]="dataMinimaPermitida" (change)="alterouData()" class="form-control" />
+            </div>
+            <div class="input-group" [class.grupo-erro]="erroHora">
+              <label class="label-principal">Escolha o Horário *</label>
+              <p class="legenda-horarios">Os horários a cinzento já se encontram reservados para esta utente.</p>
+
+              <div class="turnos-row">
+                <div class="card-turno">
+                  <div class="turno-header">
+                    <h4>Período da Manhã</h4>
+                  </div>
+                  <div class="slots-grid">
+                    <button *ngFor="let slot of horariosManha" type="button"
+                      class="slot-btn"
+                      [class.selected]="horaSelecionada === slot.hora"
+                      [class.indisponivel]="!slot.disponivel"
+                      [disabled]="!slot.disponivel"
+                      (click)="selecionarHora(slot.hora, slot.disponivel)">
+                      <span *ngIf="horaSelecionada === slot.hora">✓ </span>{{ slot.hora }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="card-turno">
+                  <div class="turno-header">
+                    <h4>Período da Tarde</h4>
+                  </div>
+                  <div class="slots-grid">
+                    <button *ngFor="let slot of horariosTarde" type="button"
+                      class="slot-btn"
+                      [class.selected]="horaSelecionada === slot.hora"
+                      [class.indisponivel]="!slot.disponivel"
+                      [disabled]="!slot.disponivel"
+                      (click)="selecionarHora(slot.hora, slot.disponivel)">
+                      <span *ngIf="horaSelecionada === slot.hora">✓ </span>{{ slot.hora }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="horaSelecionada" class="resumo-selecao">
+                <p>Consulta marcada para as <strong>{{ horaSelecionada }}</strong>
+                  <span *ngIf="dataSelecionada"> no dia <strong>{{ dataSelecionada | date:'dd/MM/yyyy' }}</strong></span>
+                  com <strong>{{ getNomeGravida() }}</strong>.
+                </p>
+              </div>
+            </div>
+
+        
+            <div class="input-group">
+              <label>Notas / Descrição</label>
+              <textarea [(ngModel)]="notas" name="notas" rows="3"
+                placeholder="Ex: Consulta de rotina, análises a pedir..."
+                class="form-control"></textarea>
+            </div>
+
+            
+            <div *ngIf="mostrarAvisoErro" class="banner-erro">
+              <div>
+                <strong>Faltam informações</strong>
+                <p *ngIf="erroGravida && erroData && erroHora">Por favor, preencha todos os campos obrigatórios.</p>
+                <p *ngIf="erroGravida && !erroData && !erroHora">Por favor, selecione uma utente.</p>
+                <p *ngIf="!erroGravida && erroData && !erroHora">Por favor, escolha uma data.</p>
+                <p *ngIf="!erroGravida && !erroData && erroHora">Por favor, selecione um horário disponível.</p>
+                <p *ngIf="mensagemErro">{{ mensagemErro }}</p>
+              </div>
+            </div>
+
+            <button type="button" class="btn-submit" (click)="confirmarAgendamento()">
+              Confirmar Consulta
+            </button>
+
+          </form>
+        </div>
+
+        
+        <div class="confirmacao-container" *ngIf="agendadoComSucesso">
+          <h2>Consulta Marcada com Sucesso!</h2>
+          <p>A consulta com <strong>{{ getNomeGravida() }}</strong> foi registada no sistema.</p>
+
+          <div class="resumo-ticket">
+            <p><strong>Utente:</strong> {{ getNomeGravida() }}</p>
+            <p><strong>Data:</strong> {{ dataSelecionada | date:'dd/MM/yyyy' }}</p>
+            <p><strong>Horário:</strong> {{ horaSelecionada }}</p>
+            <p><strong>Local:</strong> {{ localConsulta }}</p>
+          </div>
+
+          <div class="acoes-sucesso">
+            <button class="btn-agenda" (click)="irParaAgenda()">Ver na Agenda</button>
+            <button class="btn-voltar-form" (click)="voltarAoFormulario()">Marcar Outra</button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>

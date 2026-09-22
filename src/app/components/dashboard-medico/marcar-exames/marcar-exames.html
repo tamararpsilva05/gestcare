@@ -1,0 +1,161 @@
+<div class="dashboard-container">
+
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h2>Área do Médico</h2>
+    </div>
+    <ul class="menu">
+      <li (click)="voltar()">Início</li>
+      <li (click)="irParaUtentes()">Utentes</li>
+      <li (click)="irParaMarcarConsulta()">Marcar Consulta</li>
+      <li class="active">Marcar Exame</li>
+      <li (click)="irParaAgenda()">Agenda Clínica</li>
+      <li (click)="irParaPerfil()">Perfil</li>
+      <li (click)="irParaAnalise()">Análise Questionários</li>
+    </ul>
+  </nav>
+
+  <div class="main-area">
+
+    <header class="top-header">
+      <div class="saudacao">
+        <span class="boas-vindas">Marcar Exame</span>
+        <span class="sub-saudacao">Agende um exame para uma das suas utentes</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-voltar-header" (click)="voltar()">← Voltar</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="agendamento-wrapper">
+
+        <div class="form-box" *ngIf="!agendadoComSucesso">
+          <form class="formulario">
+
+            
+            <div class="input-group" [class.grupo-erro]="erroGravida">
+                <label>Selecionar Utente *</label>
+                <select [(ngModel)]="gravidaSelecionada" name="gravida" (change)="alterouGravida()">
+                    <option value="">Selecione uma utente...</option>
+                    <option *ngFor="let g of gravidas" [value]="g._id">{{ g.nome }}</option>
+                </select>
+            </div>
+            
+            <div class="input-group" [class.grupo-erro]="erroTipo">
+                <label>Tipo de Exame *</label>
+                <select [(ngModel)]="tipoExameSelecionado" name="tipoExame" (change)="alterouTipoExame()">
+                    <option value="">Selecione o tipo de exame...</option>
+                    <option *ngFor="let tipo of tiposExame" [value]="tipo">{{ tipo }}</option>
+                </select>
+            </div>
+            
+           
+            <div class="input-group" *ngIf="tipoExameSelecionado">
+                <label>Profissional Responsável</label>
+                <div class="profissional-box" *ngIf="profissionalFiltrado; else semProfissional">
+                    <span class="profissional-nome">{{ profissionalFiltrado.nomeProfissional }}</span>
+                    <span class="profissional-tipo">{{ profissionalFiltrado.tipoProfissional }}
+                        — {{ profissionalFiltrado.especialidade }}</span>
+                </div>
+                <ng-template #semProfissional>
+                    <div class="profissional-box profissional-indisponivel">
+                        <span>Nenhum profissional disponível para este tipo de exame</span>
+                    </div>
+                </ng-template>
+            </div>
+            
+            
+            <div class="input-group" [class.grupo-erro]="erroData">
+                <label>Escolha o Dia *</label>
+                <input type="date" [(ngModel)]="dataSelecionada" name="data" [min]="dataMinimaPermitida" (change)="alterouData()"
+                    class="form-control" />
+            </div>
+            
+            
+            <div class="input-group" [class.grupo-erro]="erroHora">
+              <label class="label-principal">Escolha o Horário *</label>
+              <p class="legenda-horarios">Os horários a cinzento já se encontram reservados para esta utente.</p>
+
+              <div class="turnos-row">
+                <div class="card-turno">
+                  <div class="turno-header">
+                    <h4>Período da Manhã</h4>
+                  </div>
+                  <div class="slots-grid">
+                    <button *ngFor="let slot of horariosManha" type="button"
+                      class="slot-btn"
+                      [class.selected]="horaSelecionada === slot.hora"
+                      [class.indisponivel]="!slot.disponivel"
+                      [disabled]="!slot.disponivel"
+                      (click)="selecionarHora(slot.hora, slot.disponivel)">
+                      <span *ngIf="horaSelecionada === slot.hora">✓ </span>{{ slot.hora }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="card-turno">
+                  <div class="turno-header">
+                    <h4>Período da Tarde</h4>
+                  </div>
+                  <div class="slots-grid">
+                    <button *ngFor="let slot of horariosTarde" type="button"
+                      class="slot-btn"
+                      [class.selected]="horaSelecionada === slot.hora"
+                      [class.indisponivel]="!slot.disponivel"
+                      [disabled]="!slot.disponivel"
+                      (click)="selecionarHora(slot.hora, slot.disponivel)">
+                      <span *ngIf="horaSelecionada === slot.hora">✓ </span>{{ slot.hora }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="horaSelecionada" class="resumo-selecao">
+                <p>Exame marcado para as <strong>{{ horaSelecionada }}</strong>
+                  <span *ngIf="dataSelecionada"> no dia <strong>{{ dataSelecionada | date:'dd/MM/yyyy' }}</strong></span>
+                  com <strong>{{ getNomeGravida() }}</strong>.
+                </p>
+              </div>
+            </div>
+
+            
+            <div *ngIf="mostrarAvisoErro" class="banner-erro">
+              <div>
+                <strong>Faltam informações</strong>
+                <p *ngIf="erroGravida">Por favor, selecione uma utente.</p>
+                <p *ngIf="erroTipo">Por favor, selecione o tipo de exame.</p>
+                <p *ngIf="erroData">Por favor, escolha uma data.</p>
+                <p *ngIf="erroHora">Por favor, selecione um horário disponível.</p>
+                <p *ngIf="mensagemErro">{{ mensagemErro }}</p>
+              </div>
+            </div>
+
+            <button type="button" class="btn-submit" (click)="confirmarAgendamento()">
+              Confirmar Exame
+            </button>
+
+          </form>
+        </div>
+
+       
+        <div class="confirmacao-container" *ngIf="agendadoComSucesso">
+          <h2>Exame Marcado com Sucesso!</h2>
+          <p>O exame de <strong>{{ tipoExameSelecionado }}</strong> para <strong>{{ getNomeGravida() }}</strong> foi registado no sistema.</p>
+
+          <div class="resumo-ticket">
+            <p><strong>Utente:</strong> {{ getNomeGravida() }}</p>
+            <p><strong>Tipo de Exame:</strong> {{ tipoExameSelecionado }}</p>
+            <p><strong>Data:</strong> {{ dataSelecionada | date:'dd/MM/yyyy' }}</p>
+            <p><strong>Horário:</strong> {{ horaSelecionada }}</p>
+          </div>
+
+          <div class="acoes-sucesso">
+            <button class="btn-voltar-form" (click)="voltarAoFormulario()">Marcar Outro</button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>

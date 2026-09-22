@@ -1,0 +1,325 @@
+<div class="dashboard-container">
+
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h2>Área do Médico</h2>
+    </div>
+    <ul class="menu">
+      <li (click)="voltar()">Início</li>
+      <li (click)="irParaUtentes()">Utentes</li>
+      <li (click)="irParaMarcarConsulta()">Marcar Consulta</li>
+      <li (click)="irParaMarcarExame()">Marcar Exame</li>
+      <li (click)="irParaAgenda()">Agenda Clínica</li>
+      <li (click)="irParaPerfil()">Perfil</li>
+      <li class="active">Análise Questionários</li>
+    </ul>
+  </nav>
+
+  <div class="main-area">
+    <header class="top-header">
+      <div class="saudacao">
+        <span class="boas-vindas">Análise de Questionários</span>
+        <span class="sub-saudacao">Consulte e analise os dados das suas utentes</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-voltar" (click)="modoEscolhido ? escolherModo('') : voltar()">← Voltar</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="modo-escolha" *ngIf="!modoEscolhido">
+        <h2 class="modo-titulo">O que pretende fazer?</h2>
+        <div class="modo-cards">
+
+          <div class="modo-card" (click)="escolherModo('graficos')">
+
+            <h3>Analisar Questionários</h3>
+            <p>Visualize gráficos da evolução de cada utente ao longo do tempo.</p>
+          </div>
+
+          <div class="modo-card" (click)="escolherModo('visualizar')">
+
+            <h3>Visualizar Questionário</h3>
+            <p>Veja as respostas completas de um questionário de um dia específico.</p>
+          </div>
+
+          <div class="modo-card" (click)="escolherModo('relatorio')">
+
+            <h3>Descarregar Relatório</h3>
+            <p>Gere e exporte/imprima um relatório personalizado em PDF de uma utente.</p>
+          </div>
+
+        </div>
+      </div>
+      <ng-container *ngIf="modoEscolhido === 'graficos'">
+
+        <div class="analise-card">
+          <div class="step-header">
+            <span class="step-number">1</span>
+            <h3>Selecionar Utente</h3>
+          </div>
+          <div class="step-body passo-1">
+            <select class="custom-select" [(ngModel)]="utenteSelecionada" (change)="verificarSelecao()">
+              <option [ngValue]="null" disabled selected>Escolha uma utente...</option>
+              <option *ngFor="let utente of listaUtentes" [ngValue]="utente">
+                {{ utente.nome }} ({{ utente.semanasGestacao }} semanas)
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="analise-card" [class.disabled]="!utenteSelecionada">
+          <div class="step-header">
+            <span class="step-number">2</span>
+            <h3>Selecionar Variável de Análise</h3>
+          </div>
+          <div class="step-body passo-2">
+            <select class="custom-select" [(ngModel)]="metricaSelecionada" (change)="gerarGrafico()">
+              <option [ngValue]="null" disabled selected>Escolha o fator a analisar...</option>
+              <option *ngFor="let metrica of listaMetricas" [ngValue]="metrica.id">
+                {{ metrica.nome }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="analise-card" [hidden]="!utenteSelecionada || !metricaSelecionada">
+          <div class="step-header chart-header">
+            <div class="title-group">
+              <span class="step-number">3</span>
+              <h3>{{ obterNomeMetrica() }}</h3>
+            </div>
+            <span class="chart-subtitle" *ngIf="utenteSelecionada">
+              {{ utenteSelecionada.nome }} • {{ utenteSelecionada.semanasGestacao }} semanas
+            </span>
+          </div>
+          <div class="step-body chart-container" style="position: relative; height: 400px; width: 100%;">
+            <canvas id="meuGrafico"></canvas>
+          </div>
+        </div>
+
+      </ng-container>
+      <ng-container *ngIf="modoEscolhido === 'visualizar'">
+
+        <div class="analise-card">
+          <div class="step-header">
+            <span class="step-number">1</span>
+            <h3>Selecionar Utente</h3>
+          </div>
+          <div class="step-body passo-1">
+            <select class="custom-select" [(ngModel)]="utenteSelecionada" (change)="verificarSelecao()">
+              <option [ngValue]="null" disabled selected>Escolha uma utente...</option>
+              <option *ngFor="let utente of listaUtentes" [ngValue]="utente">
+                {{ utente.nome }} ({{ utente.semanasGestacao }} semanas)
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="analise-card" *ngIf="utenteSelecionada" [class.disabled]="!diasDisponiveis.length">
+          <div class="step-header">
+            <span class="step-number">2</span>
+            <h3>Selecionar o Dia</h3>
+          </div>
+          <div class="step-body passo-1">
+            <select class="custom-select" [(ngModel)]="diaSelecionado" (change)="carregarQuestionarioDoDia()">
+              <option value="" disabled selected>Escolha um dia...</option>
+              <option *ngFor="let dia of diasDisponiveis" [value]="dia">{{ dia }}</option>
+            </select>
+            <p class="sem-dados" *ngIf="!diasDisponiveis.length">Esta utente ainda não tem questionários.</p>
+          </div>
+        </div>
+
+        <div class="analise-card questionario-print" *ngIf="questionarioVisualizando">
+          <div class="step-header">
+            <span class="step-number">3</span>
+            <h3>Questionário de {{ diaSelecionado }} — {{ utenteSelecionada.nome }}</h3>
+          </div>
+          <div class="step-body">
+
+            <h4 class="secao-titulo">Avaliação Física</h4>
+            <div class="resposta-grid">
+              <div class="resposta-item">
+                <span class="resposta-label">Qualidade do Sono</span>
+                <span class="resposta-valor">{{ questionarioVisualizando.qualidadeSono }}/5</span>
+              </div>
+              <div class="resposta-item">
+                <span class="resposta-label">Nível de Fadiga</span>
+                <span class="resposta-valor">{{ questionarioVisualizando.nivelFadiga }}/5</span>
+              </div>
+              <div class="resposta-item">
+                <span class="resposta-label">Dores Físicas</span>
+                <span class="resposta-valor">{{ questionarioVisualizando.doresFisicas }}/5</span>
+              </div>
+              <div class="resposta-item">
+                <span class="resposta-label">Náuseas e Enjoos</span>
+                <span class="resposta-valor">{{ questionarioVisualizando.nauseasEnjoos }}/5</span>
+              </div>
+            </div>
+            <div class="resposta-texto" *ngIf="questionarioVisualizando.detalhesFisicos">
+              <span class="resposta-label">Notas Físicas:</span>
+              <p>{{ questionarioVisualizando.detalhesFisicos }}</p>
+            </div>
+
+            <h4 class="secao-titulo">Avaliação Emocional</h4>
+            <div class="resposta-grid">
+              <div class="resposta-item">
+                <span class="resposta-label">Nível de Ansiedade</span>
+                <span class="resposta-valor">{{ questionarioVisualizando.nivelAnsiedade }}/5</span>
+              </div>
+              <div class="resposta-item">
+                <span class="resposta-label">Estabilidade de Humor</span>
+                <span class="resposta-valor">{{ questionarioVisualizando.estabilidadeHumor }}/5</span>
+              </div>
+              <div class="resposta-item">
+                <span class="resposta-label">Energia e Motivação</span>
+                <span class="resposta-valor">{{ questionarioVisualizando.energiaMotivacao }}/5</span>
+              </div>
+              <div class="resposta-item">
+                <span class="resposta-label">Perceção de Apoio</span>
+                <span class="resposta-valor">{{ questionarioVisualizando.percecaoApoio }}/5</span>
+              </div>
+            </div>
+            <div class="resposta-texto" *ngIf="questionarioVisualizando.detalhesEmocionais">
+              <span class="resposta-label">Notas Emocionais:</span>
+              <p>{{ questionarioVisualizando.detalhesEmocionais }}</p>
+            </div>
+
+          </div>
+        </div>
+
+      </ng-container>
+      <ng-container *ngIf="modoEscolhido === 'relatorio'">
+
+        <div class="analise-card">
+          <div class="step-header">
+            <span class="step-number">1</span>
+            <h3>Selecionar Utente</h3>
+          </div>
+          <div class="step-body passo-1">
+            <select class="custom-select" [(ngModel)]="utenteSelecionada" (change)="verificarSelecao()">
+              <option [ngValue]="null" disabled selected>Escolha uma utente...</option>
+              <option *ngFor="let utente of listaUtentes" [ngValue]="utente">
+                {{ utente.nome }} ({{ utente.semanasGestacao }} semanas)
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="analise-card" *ngIf="utenteSelecionada">
+          <div class="step-header">
+            <span class="step-number">2</span>
+            <h3>Personalizar Relatório</h3>
+          </div>
+          <div class="step-body">
+            <p class="legenda-opcoes">Selecione o que quer incluir no relatório:</p>
+            <div class="opcoes-grid">
+              <label class="opcao-check" *ngFor="let opcao of opcoesRelatorio">
+                <input type="checkbox" [(ngModel)]="opcao.selecionado">
+                <span>{{ opcao.nome }}</span>
+              </label>
+            </div>
+            <p class="sem-dados" *ngIf="!questionariosReais.length">
+              Esta utente ainda não tem questionários registados.
+            </p>
+          </div>
+        </div>
+
+        <div class="analise-card" *ngIf="utenteSelecionada && questionariosReais.length">
+          <div class="step-header">
+            <span class="step-number">3</span>
+            <h3>Pré-visualização do Relatório</h3>
+          </div>
+          <div class="step-body">
+
+            <div id="preview-relatorio" class="relatorio-preview">
+
+              <h1>Relatório de Acompanhamento — {{ utenteSelecionada?.nome }}</h1>
+              <div *ngIf="temOpcao('dadosPessoais')">
+                <h2>Dados da Utente</h2>
+                <div class="relatorio-grid-header">
+                  <div class="relatorio-item">
+                    <span class="resposta-label">Nome</span>
+                    <span class="resposta-valor">{{ utenteSelecionada?.nome }}</span>
+                  </div>
+                  <div class="relatorio-item">
+                    <span class="resposta-label">Semanas de Gestação</span>
+                    <span class="resposta-valor">{{ utenteSelecionada?.semanasGestacao }} semanas</span>
+                  </div>
+                  <div class="relatorio-item">
+                    <span class="resposta-label">Email</span>
+                    <span class="resposta-valor">{{ utenteSelecionada?.email }}</span>
+                  </div>
+                  <div class="relatorio-item">
+                    <span class="resposta-label">Nº de Questionários</span>
+                    <span class="resposta-valor">{{ questionariosReais.length }}</span>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="temOpcao('avaliacaoFisica')">
+                <h2>Avaliação Física — Médias</h2>
+                <div class="relatorio-grid-header">
+                  <div class="relatorio-item">
+                    <span class="resposta-label">Qualidade do Sono</span>
+                    <span class="resposta-valor">{{ mediaMetrica['qualidadeSono'] }}/5</span>
+                  </div>
+                  <div class="relatorio-item">
+                    <span class="resposta-label">Nível de Fadiga</span>
+                    <span class="resposta-valor">{{ mediaMetrica['nivelFadiga'] }}/5</span>
+                  </div>
+                  <div class="relatorio-item">
+                    <span class="resposta-label">Dores Físicas</span>
+                    <span class="resposta-valor">{{ mediaMetrica['doresFisicas'] }}/5</span>
+                  </div>
+                  <div class="relatorio-item">
+                    <span class="resposta-label">Náuseas e Enjoos</span>
+                    <span class="resposta-valor">{{ mediaMetrica['nauseasEnjoos'] }}/5</span>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="temOpcao('avaliacaoEmocional')">
+                <h2>Avaliação Emocional — Médias</h2>
+                <div class="relatorio-grid-header">
+                  <div class="relatorio-item">
+                    <span class="resposta-label">Nível de Ansiedade</span>
+                    <span class="resposta-valor">{{ mediaMetrica['nivelAnsiedade'] }}/5</span>
+                  </div>
+                  <div class="relatorio-item">
+                    <span class="resposta-label">Estabilidade de Humor</span>
+                    <span class="resposta-valor">{{ mediaMetrica['estabilidadeHumor'] }}/5</span>
+                  </div>
+                  <div class="relatorio-item">
+                    <span class="resposta-label">Energia e Motivação</span>
+                    <span class="resposta-valor">{{ mediaMetrica['energiaMotivacao'] }}/5</span>
+                  </div>
+                  <div class="relatorio-item">
+                    <span class="resposta-label">Perceção de Apoio</span>
+                    <span class="resposta-valor">{{ mediaMetrica['percecaoApoio'] }}/5</span>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="temOpcao('notas')">
+                <h2>Notas e Observações</h2>
+                <ng-container *ngFor="let q of questionariosReais">
+                  <div *ngIf="q.detalhesFisicos || q.detalhesEmocionais" class="relatorio-nota">
+                    <strong>{{ q.dataQuestionario | date:'dd/MM/yyyy' }}</strong>
+                    <p *ngIf="q.detalhesFisicos">{{ q.detalhesFisicos }}</p>
+                    <p *ngIf="q.detalhesEmocionais">{{ q.detalhesEmocionais }}</p>
+                  </div>
+                </ng-container>
+                <p class="sem-dados" *ngIf="!questionariosReais.some(q => q.detalhesFisicos || q.detalhesEmocionais)">
+                  Sem notas registadas.
+                </p>
+              </div>
+
+            </div>
+
+            <button class="btn-download-pdf" (click)="gerarPDF()">
+              Imprimir PDF
+            </button>
+          </div>
+        </div>
+      </ng-container>
+    </main>
+  </div>
+</div>

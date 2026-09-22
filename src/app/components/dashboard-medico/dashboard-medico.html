@@ -1,0 +1,120 @@
+<div class="dashboard-container">
+
+    <div class="overlay-obrigatoria" *ngIf="obrigarTrocarSenha">
+        <div class="obrigatorio-card">
+            <h2>Bem-vindo(a)!</h2>
+            <p>Por segurança, deves alterar a tua password antes de continuar.</p>
+            <div class="form-group">
+                <label>Nova password</label>
+                <input type="password" [(ngModel)]="novaSenhaObrigatoria" placeholder="Mínimo 6 caracteres">
+            </div>
+            <div class="form-group">
+                <label>Confirmar nova password</label>
+                <input type="password" [(ngModel)]="confirmarSenhaObrigatoria" placeholder="Repete a password">
+            </div>
+            <div class="erro" *ngIf="erroSenhaObrigatoria">{{ erroSenhaObrigatoria }}</div>
+            <div class="sucesso" *ngIf="sucessoSenhaObrigatoria">{{ sucessoSenhaObrigatoria }}</div>
+            <button class="btn-salvar" type="button" (click)="alterarPasswordObrigatoria()">Alterar password</button>
+        </div>
+    </div>
+
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Área do Médico</h2>
+        </div>
+        <ul class="menu">
+            <li [class.active]="paginaAtiva === 'inicio'" (click)="paginaAtiva = 'inicio'">Início</li>
+            <li (click)="irParaUtentes()">Utentes</li>
+            <li (click)="irParaMarcarConsulta()">Marcar Consulta</li>
+            <li (click)="irParaMarcarExame()">Marcar Exame</li>
+            <li (click)="irParaAgenda()">Agenda Clínica</li>
+            <li (click)="irParaPerfil()">Perfil</li>
+            <li (click)="irParaAnalise()">Análise Questionários</li>
+        </ul>
+    </nav>
+
+    <div class="main-area">
+
+        <header class="top-header">
+            <div class="saudacao">
+                <span class="boas-vindas">Olá, <strong>{{ nomeExibido }}</strong>!</span>
+                <span class="sub-saudacao">Bem-vindo ao seu painel clínico</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn-sair-destacado" type="button" (click)="logout()">Sair</button>
+            </div>
+        </header>
+
+        <main class="content">
+        
+            
+            <section class="welcome-section">
+                <div class="lembretes" *ngIf="notificacoesMedico.length > 0">
+                    <div class="lembrete-header">
+                        <span class="lembrete-titulo">{{ notificacoesMedico.length }} consulta(s) cancelada(s)</span>
+                    </div>
+                    <div class="lembrete-item" *ngFor="let n of notificacoesMedico">
+                        <span class="lembrete-paciente">{{ n.descricaoNotificacao }}</span>
+                    </div>
+                </div>       <div class="lembretes" *ngIf="consultasNovas.length > 0">
+                    <div class="lembrete-header">
+                        <span class="lembrete-titulo">{{ consultasNovas.length }} nova(s) consulta(s) marcada(s)
+                            hoje</span>
+                        <button class="btn-ver-agenda" (click)="irParaAgenda(consultasNovas[0].dataConsulta)">Ver agenda →</button>
+                    </div>
+                    <div class="lembrete-item" *ngFor="let c of consultasNovas">
+                        <span class="lembrete-paciente">{{ c.idGravida?.nome || 'Paciente' }}</span>
+                        <span class="lembrete-data">Marcada para {{ formatarData(c.dataConsulta) }} às {{
+                            c.horarioConsulta }}</span>
+                    </div>
+                </div>
+                <h3>Resumo do dia</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>Pacientes Ativas</h4>
+                        <p class="stat-number">{{ totalPacientes }}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Consultas Hoje</h4>
+                        <p class="stat-number">{{ consultasHoje }}</p>
+                    </div>
+                </div>
+            </section>
+
+           
+            <section class="proximas-consultas">
+                <h3>Próximas Consultas</h3>
+
+                <div class="carregando" *ngIf="carregando">
+                    <p>A carregar...</p>
+                </div>
+
+                <div class="consulta-vazia" *ngIf="!carregando && proximasConsultas.length === 0">
+                    <p>Sem consultas agendadas.</p>
+                </div>
+
+                <div class="consultas-lista" *ngIf="!carregando && proximasConsultas.length > 0">
+                    <div class="consulta-item" *ngFor="let consulta of proximasConsultas">
+                        <div class="consulta-data-hora">
+                            <span class="consulta-hora">{{ consulta.horarioConsulta }}</span>
+                            <span class="consulta-data">{{ formatarData(consulta.dataConsulta) }}</span>
+                        </div>
+                        <div class="consulta-info">
+                            <span class="consulta-paciente">{{ consulta.idGravida?.nome || 'Paciente' }}</span>
+                            <span class="consulta-local">{{ consulta.local }}</span>
+                            <span class="consulta-desc" *ngIf="consulta.descricaoConsulta">{{ consulta.descricaoConsulta
+                                }}</span>
+                        </div>
+                        <div class="consulta-estado" [class.estado-confirmada]="getEstado(consulta) === 'Confirmada'"
+                            [class.estado-pendente]="getEstado(consulta) === 'Pendente'"
+                            [class.estado-cancelada]="getEstado(consulta) === 'Cancelada'">
+                            {{ getEstado(consulta) }}
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+    </div>
+</div>

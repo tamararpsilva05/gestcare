@@ -1,0 +1,180 @@
+<div class="dashboard-container">
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Área do Médico</h2>
+        </div>
+        <ul class="menu">
+            <li (click)="voltar()">Início</li>
+            <li class="active">Utentes</li>
+            <li (click)="irParaMarcarConsulta()">Marcar Consulta</li>
+            <li (click)="irParaMarcarExame()">Marcar Exame</li>
+            <li (click)="irParaAgenda()">Agenda Clínica</li>
+            <li (click)="irParaPerfil()">Perfil</li>
+            <li (click)="irParaAnalise()">Análise Questionários</li>
+        </ul>
+    </nav>
+    <div class="main-area">
+        <header class="top-header">
+            <div class="saudacao">
+                <span class="boas-vindas">Utentes</span>
+                <span class="sub-saudacao">Lista de grávidas associadas ao seu perfil</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn-voltar" (click)="voltar()">← Voltar</button>
+            </div>
+        </header>
+        <main class="content">
+            <div class="carregando" *ngIf="carregando">
+                <p>A carregar utentes...</p>
+            </div>
+            <div class="erro" *ngIf="erro">
+                <p>{{ erro }}</p>
+            </div>
+
+            
+            <div class="utentes-layout-grid" *ngIf="!carregando && !erro">
+
+                
+                <div class="lista-utentes-seccao">
+
+                    <div class="barra-pesquisa-container">
+                        <input type="text" [(ngModel)]="termoPesquisa" placeholder="Pesquisar utente por nome..."
+                            class="input-pesquisa">
+                    </div>
+
+                    <div class="tabela-container">
+                        <div class="tabela-header">
+                            <div class="mensagem-xml-sucesso" *ngIf="mensagemXML">{{ mensagemXML }}</div>
+                            <div class="mensagem-xml-erro" *ngIf="erroXML">{{ erroXML }}</div>
+                            <span class="total">{{ utentesFiltradas.length }} utente(s) encontrada(s)</span>
+                            <div class="acoes-xml">
+                                <button class="btn-exportar-xml" (click)="exportarXML()">⬇ Exportar XML</button>
+                                <label class="btn-importar-xml">
+                                    {{ importandoXML ? 'A importar...' : '⬆ Importar XML' }}
+                                    <input type="file" accept=".xml" (change)="importarXML($event)"
+                                        style="display:none">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="sem-utentes" *ngIf="utentesFiltradas.length === 0">
+                            <p>Nenhuma utente corresponde à pesquisa.</p>
+                        </div>
+
+                        <table class="tabela" *ngIf="utentesFiltradas.length > 0">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Idade</th>
+                                    <th>Semanas de Gestação</th>
+                                    <th>Grupo Sanguíneo</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let utente of utentesFiltradas">
+                                    <td>{{ utente.nome }}</td>
+                                    <td>{{ utente.email }}</td>
+                                    <td>{{ utente.idade }} anos</td>
+                                    <td>{{ utente.semanasGestacao }} semanas</td>
+                                    <td>{{ utente.grupoSanguineo || 'Não definido' }}</td>
+                                    <td>
+                                        <button class="btn-detalhes" (click)="verDetalhes(utente._id)">
+                                            Ver detalhes
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+                
+                <aside class="sidebar-registo-seccao">
+                    <div class="registo-card">
+
+                        <div class="card-header-registo">
+                            <h3>Registo Rápido</h3>
+                            <span class="sub-tag">1ª Consulta / Nova Utente</span>
+                        </div>
+
+                        <div class="card-body-registo">
+                            <form (ngSubmit)="registarNovaUtente()">
+
+                                <div class="campo-grupo">
+                                    <label for="nome">Nome Completo</label>
+                                    <input type="text" id="nome" name="nome" [(ngModel)]="novaUtente.nome"
+                                        placeholder="Ex: Maria Eduarda Santos" required>
+                                </div>
+
+                                <div class="campo-grupo">
+                                    <label for="email">Endereço de Email</label>
+                                    <input type="email" id="email" name="email" [(ngModel)]="novaUtente.email"
+                                        placeholder="Ex: maria.santos@email.com" required>
+                                </div>
+
+                                <div class="campo-grupo">
+                                    <label for="idade">Idade</label>
+                                    <input type="number" id="idade" name="idade" [(ngModel)]="novaUtente.idade"
+                                        placeholder="Entre 16 e 55 anos" min="16" max="55" required>
+                                </div>
+
+                                <div class="campo-grupo">
+                                    <label for="dataInicio">Data de Início da Gravidez</label>
+                                    <input type="date" id="dataInicio" name="dataInicio"
+                                        [(ngModel)]="novaUtente.dataInicioGravidez" (change)="calcularSemanas()"
+                                        [max]="hoje">
+                                </div>
+
+                                <div class="campo-grupo">
+                                    <label for="semanas">Semanas de Gestação</label>
+                                    <input type="number" id="semanas" name="semanas"
+                                        [(ngModel)]="novaUtente.semanasGestacao" placeholder="Calculado automaticamente"
+                                        readonly>
+                                </div>
+
+                                <div class="campo-grupo">
+                                    <label for="grupoSanguineo">Grupo Sanguíneo</label>
+                                    <select id="grupoSanguineo" name="grupoSanguineo"
+                                        [(ngModel)]="novaUtente.grupoSanguineo">
+                                        <option value="">Selecione...</option>
+                                        <option value="A+">A+</option>
+                                        <option value="A-">A-</option>
+                                        <option value="B+">B+</option>
+                                        <option value="B-">B-</option>
+                                        <option value="O+">O+</option>
+                                        <option value="O-">O-</option>
+                                        <option value="AB+">AB+</option>
+                                        <option value="AB-">AB-</option>
+                                    </select>
+                                </div>
+
+                                <div class="erro-registo" *ngIf="erroRegisto">{{ erroRegisto }}</div>
+
+                                <button type="submit" class="btn-registar-utente">
+                                    <span class="icon">+</span> Criar Registo Clínico
+                                </button>
+
+                                <div class="toast-notificacao" *ngIf="mensagemSucesso">
+                                    <div class="toast-conteudo">
+                                        <div class="toast-icone">✓</div>
+                                        <div class="toast-mensagem">
+                                            <span class="toast-titulo">Sucesso</span>
+                                            <p class="toast-texto">{{ mensagemSucesso }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </form>
+                        </div>
+
+                    </div>
+                </aside>
+
+            </div>
+
+        </main>
+    </div>
+</div>
